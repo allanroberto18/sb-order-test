@@ -17,3 +17,13 @@ services:
       retries: 10
     volumes:
       - postgres-data:/var/lib/postgresql/data
+
+  openai-mock:
+    image: wiremock/wiremock:3.9.1
+    container_name: order-openai-mock
+    command:
+      - --global-response-templating
+    ports:
+      - "8089:8080"
+    volumes:
+      - ./docker/openai-mock:/home/wiremock
