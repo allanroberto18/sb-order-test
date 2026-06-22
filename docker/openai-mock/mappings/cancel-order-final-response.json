@@ -1,5 +1,5 @@
 {
-  "priority": 2,
+  "priority": 1,
   "request": {
     "method": "POST",
     "url": "/v1/chat/completions",

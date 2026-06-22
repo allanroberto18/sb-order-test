@@ -17,6 +17,7 @@
 		<java.version>21</java.version>
 		<springdoc.version>2.8.8</springdoc.version>
 		<spring-ai.version>2.0.0</spring-ai.version>
+		<mockito.version>5.23.0</mockito.version>
 	</properties>
 
 	<dependencyManagement>
@@ -161,6 +162,18 @@
 						</configuration>
 					</execution>
 				</executions>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-surefire-plugin</artifactId>
+				<configuration>
+					<argLine>-javaagent:${settings.localRepository}/org/mockito/mockito-core/${mockito.version}/mockito-core-${mockito.version}.jar -Xmx512m -XX:MaxMetaspaceSize=256m</argLine>
+					<forkCount>1</forkCount>
+					<reuseForks>true</reuseForks>
+					<systemPropertyVariables>
+						<logging.file.name>${project.build.directory}/order-test.log</logging.file.name>
+					</systemPropertyVariables>
+				</configuration>
 			</plugin>
 		</plugins>
 	</build>

@@ -1,11 +1,12 @@
 {
-  "priority": 1,
+  "priority": 2,
   "request": {
     "method": "POST",
     "url": "/v1/chat/completions",
     "bodyPatterns": [
       {"contains": "\"tools\""},
-      {"contains": "Please cancel my order"}
+      {"contains": "Please cancel my order"},
+      {"doesNotMatch": ".*\"tool_call_id\".*"}
     ]
   },
   "response": {
