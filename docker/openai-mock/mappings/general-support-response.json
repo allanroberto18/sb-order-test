@@ -1,0 +1,32 @@
+{
+  "priority": 10,
+  "request": {
+    "method": "POST",
+    "url": "/v1/chat/completions"
+  },
+  "response": {
+    "status": 200,
+    "headers": {"Content-Type": "application/json"},
+    "jsonBody": {
+      "id": "chatcmpl-mock-general-1",
+      "object": "chat.completion",
+      "created": 1718900002,
+      "model": "gpt-4.1-mini",
+      "choices": [
+        {
+          "index": 0,
+          "message": {
+            "role": "assistant",
+            "content": "Orders can only be cancelled while they remain in PENDING status. Every five minutes, pending orders move to PROCESSING."
+          },
+          "finish_reason": "stop"
+        }
+      ],
+      "usage": {
+        "prompt_tokens": 80,
+        "completion_tokens": 25,
+        "total_tokens": 105
+      }
+    }
+  }
+}
