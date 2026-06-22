@@ -28,5 +28,98 @@ services:
     volumes:
       - ./docker/openai-mock:/home/wiremock
 
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: order-app
+    env_file:
+      - .env
+    environment:
+      SERVER_PORT: ${SERVER_PORT:-8080}
+      DB_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:-order}
+      DB_USERNAME: ${DB_USERNAME:-order}
+      DB_PASSWORD: ${DB_PASSWORD:-order}
+      FLYWAY_ENABLED: ${FLYWAY_ENABLED:-true}
+      ORDER_PROCESSING_CRON: ${ORDER_PROCESSING_CRON:-0 */5 * * * *}
+      AI_PROVIDER: ${AI_PROVIDER:-openai}
+      AI_MODEL: ${AI_MODEL:-gpt-4.1-mini}
+      AI_TIMEOUT: ${AI_TIMEOUT:-PT20S}
+      KNOWLEDGE_BASE_RESOURCE: ${KNOWLEDGE_BASE_RESOURCE:-knowledge_base.json}
+      SPRING_AI_CHAT_MODEL_PROVIDER: ${SPRING_AI_CHAT_MODEL_PROVIDER:-openai}
+      OPENAI_BASE_URL: ${OPENAI_BASE_URL:-http://openai-mock:8080/v1}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-test-key}
+      ROOT_LOG_LEVEL: ${ROOT_LOG_LEVEL:-INFO}
+      APP_LOG_LEVEL: ${APP_LOG_LEVEL:-INFO}
+      LOGGING_FILE_NAME: ${LOGGING_FILE_NAME:-/var/log/order/application.log}
+    ports:
+      - "${SERVER_PORT:-8080}:8080"
+    volumes:
+      - app-logs:/var/log/order
+    depends_on:
+      postgres:
+        condition: service_healthy
+      openai-mock:
+        condition: service_started
+
+  prometheus:
+    image: prom/prometheus:v3.5.0
+    container_name: order-prometheus
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./docker/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    depends_on:
+      app:
+        condition: service_started
+
+  loki:
+    image: grafana/loki:3.5.0
+    container_name: order-loki
+    command:
+      - -config.file=/etc/loki/config.yml
+    ports:
+      - "3100:3100"
+    volumes:
+      - ./docker/loki/config.yml:/etc/loki/config.yml:ro
+      - loki-data:/loki
+
+  promtail:
+    image: grafana/promtail:3.5.0
+    container_name: order-promtail
+    command:
+      - -config.file=/etc/promtail/config.yml
+    volumes:
+      - ./docker/promtail/promtail.yml:/etc/promtail/config.yml:ro
+      - app-logs:/var/log/order:ro
+    depends_on:
+      app:
+        condition: service_started
+      loki:
+        condition: service_started
+
+  grafana:
+    image: grafana/grafana:12.1.1
+    container_name: order-grafana
+    environment:
+      GF_SECURITY_ADMIN_USER: ${GRAFANA_ADMIN_USER:-admin}
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:-admin}
+      GF_USERS_ALLOW_SIGN_UP: "false"
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./docker/grafana/provisioning:/etc/grafana/provisioning:ro
+      - grafana-data:/var/lib/grafana
+    depends_on:
+      prometheus:
+        condition: service_started
+      loki:
+        condition: service_started
+
 volumes:
   postgres-data:
+  grafana-data:
+  loki-data:
+  app-logs:
